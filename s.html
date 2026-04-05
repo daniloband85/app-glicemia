@@ -1,0 +1,52 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'home_screen.dart';
+
+class LoginScreen extends StatefulWidget {
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
+  String email = '', password = '', nome = '', saude = '';
+
+  void _login() async {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen()));
+    } catch (e) { print(e); }
+  }
+
+  void _cadastro() async {
+    try {
+      UserCredential user = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      await _firestore.collection('usuarios').doc(user.user!.uid).set({
+        'nome': nome, 'saude': saude, 'glicemias': []
+      });
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen()));
+    } catch (e) { print(e); }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Login/Cadastro')),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(onChanged: (v) => nome = v, decoration: InputDecoration(labelText: 'Nome')),
+            TextField(onChanged: (v) => saude = v, decoration: InputDecoration(labelText: 'Saúde (ex: tipo diabetes)')),
+            TextField(onChanged: (v) => email = v, decoration: InputDecoration(labelText: 'Email')),
+            TextField(obscureText: true, onChanged: (v) => password = v, decoration: InputDecoration(labelText: 'Senha')),
+            ElevatedButton(onPressed: _cadastro, child: Text('Cadastrar')),
+            ElevatedButton(onPressed: _login, child: Text('Login')),
+          ],
+        ),
+      ),
+    );
+  }
+}
